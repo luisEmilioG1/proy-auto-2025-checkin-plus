@@ -20,16 +20,18 @@ void setup() {
   lcd.init();
   lcd.backlight();
   lcd.clear();
-  
+
+  Serial.println("Arduino listo. Envia texto por el Monitor Serial.");
+}
+
+void loop() {
+
   // Mensaje inicial de bienvenida
   lcd.setCursor(0, 0);
   lcd.print("Bienvenido!");
   lcd.setCursor(0, 1);
-  Serial.println("Arduino listo. Envia texto por el Monitor Serial.");
   lcd.print("Hotel AUTMTZDO");
-}
-
-void loop() {
+  
   // Comprueba si hay datos disponibles en el puerto serial
   if (Serial.available()) {
     // Lee toda la línea de entrada hasta el carácter de nueva línea
