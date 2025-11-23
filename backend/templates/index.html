@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reconocimiento Facial</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Sistema de Reconocimiento Facial</h1>
+            <div class="status-bar">
+                <span id="status-info" class="status-indicator">
+                    Sistema activo
+                </span>
+            </div>
+        </header>
+
+        <main>
+            <div class="video-container">
+                <img src="{{ url_for('stream') }}" alt="Video Stream" id="video-stream">
+            </div>
+
+            <div class="controls">
+                <div class="control-section">
+                    <h2>Gestión de Caras Conocidas</h2>
+                    <div class="add-face-form">
+                        <input type="text" id="face-name" placeholder="Nombre de la persona" required>
+                        <input type="file" id="face-image" accept="image/*" required>
+                        <button onclick="addFace()">Agregar Cara</button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h2>Caras Registradas</h2>
+                    <div id="faces-list" class="faces-list">
+                        <p>Cargando...</p>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h2>Comparar Foto</h2>
+                    <div class="compare-form">
+                        <input type="file" id="compare-image" accept="image/*" required>
+                        <button onclick="compareFace()">Comparar Cara</button>
+                    </div>
+                    <div id="compare-results" class="compare-results"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function compareFace() {
+            const fileInput = document.getElementById('compare-image');
+            const file = fileInput.files[0];
+            const resultsDiv = document.getElementById('compare-results');
+            
+            if (!file) {
+                alert('Por favor selecciona una imagen para comparar');
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<p>Comparando...</p>';
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            fetch('/api/compare', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.error) {
+                    if (data.matches && data.matches.length > 0) {
+                        let html = '<h3>Resultados:</h3>';
+                        data.matches.forEach(match => {
+                            const status = match.recognized ? '✓ Reconocido' : '✗ Desconocido';
+                            const color = match.recognized ? 'green' : 'red';
+                            html += `
+                                <div class="match-result" style="border-left: 4px solid ${color}; padding: 10px; margin: 10px 0; background: #f8f9fa;">
+                                    <strong>${match.name}</strong><br>
+                                    <span style="color: ${color};">${status}</span>
+                                </div>
+                            `;
+                        });
+                        resultsDiv.innerHTML = html;
+                    } else {
+                        resultsDiv.innerHTML = '<p>No se detectaron caras en la imagen</p>';
+                    }
+                } else {
+                    resultsDiv.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultsDiv.innerHTML = '<p style="color: red;">Error al comparar la imagen</p>';
+            });
+        }
+
+        function addFace() {
+            const nameInput = document.getElementById('face-name');
+            const fileInput = document.getElementById('face-image');
+            
+            const name = nameInput.value.trim();
+            const file = fileInput.files[0];
+            
+            if (!name) {
+                alert('Por favor ingresa un nombre');
+                return;
+            }
+            
+            if (!file) {
+                alert('Por favor selecciona una imagen');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('image', file);
+            
+            fetch('/api/faces', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert('Cara agregada exitosamente');
+                    nameInput.value = '';
+                    fileInput.value = '';
+                    loadFacesList();
+                } else {
+                    alert('Error: ' + (data.error || 'Error desconocido'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al agregar cara');
+            });
+        }
+
+        function deleteFace(name) {
+            if (!confirm(`¿Estás seguro de eliminar la cara de ${name}?`)) {
+                return;
+            }
+            
+            fetch(`/api/faces/${name}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert('Cara eliminada exitosamente');
+                    loadFacesList();
+                } else {
+                    alert('Error: ' + (data.error || 'Error desconocido'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al eliminar cara');
+            });
+        }
+
+        function loadFacesList() {
+            fetch('/api/faces')
+                .then(response => response.json())
+                .then(data => {
+                    const facesList = document.getElementById('faces-list');
+                    if (data.faces.length === 0) {
+                        facesList.innerHTML = '<p>No hay caras registradas</p>';
+                    } else {
+                        facesList.innerHTML = data.faces.map(name => 
+                            `<div class="face-item">
+                                <span>${name}</span>
+                                <button onclick="deleteFace('${name}')">Eliminar</button>
+                            </div>`
+                        ).join('');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('faces-list').innerHTML = '<p>Error al cargar caras</p>';
+                });
+        }
+
+        // Load faces list on page load
+        window.addEventListener('load', () => {
+            loadFacesList();
+        });
+    </script>
+</body>
+</html>
+
