@@ -23,10 +23,6 @@ wheels/
 .installed.cfg
 *.egg
 
-# Face recognition models
-*.xml
-*_labels.txt
-
 # Video files
 *.mp4
 *.avi
