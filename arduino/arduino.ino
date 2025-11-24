@@ -21,7 +21,7 @@ void setup() {
   Serial.begin(9600);  
   pinMode(TOUCH_SENSOR_PIN, INPUT);
   
-  miServo.write(0); 
+  miServo.write(180); 
 
   // Inicializar el LCD
   lcd.init();
@@ -44,7 +44,7 @@ void loop() {
   if (servoActive) {
     if (currentTime - servoStartTime >= SERVO_DURATION) {
       // Tiempo completado, cerrar puerta
-      miServo.write(0);
+      miServo.write(180);
       servoActive = false;
       Serial.println("Puerta cerrada");
     }
@@ -74,7 +74,7 @@ void loop() {
     
     // Comando para abrir puerta (funciona en paralelo con LCD)
     if (command == "door:true") {
-      miServo.write(180);
+      miServo.write(90);
       servoStartTime = currentTime;
       servoActive = true;
       Serial.println("Abriendo puerta");

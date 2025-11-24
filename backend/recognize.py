@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 MODEL_FILE = "face_model.xml"
 CASCADE_PATH = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
 FACE_CASCADE = cv2.CascadeClassifier(CASCADE_PATH)
-SECOND_PRICING = 500  # Cost per minute (adjust as needed)
+DAY_PRICING = 1000000  # Cost per minute (adjust as needed)
 
 # Serial configuration
 SERIAL_PORT = "COM4"
@@ -345,12 +345,12 @@ def recognize_from_stream(model_file: str = MODEL_FILE, camera_index: int = 0, c
                         # If it's a check-out, send display message with elapsed time
                         if not is_entry:
                             txt = f"Tiempo: {elapsed_seconds}m".ljust(16)
-                            txt += f"Pago: {elapsed_seconds * SECOND_PRICING} $".ljust(16)
+                            txt += f"Pago: {elapsed_seconds * DAY_PRICING} $".ljust(16)
                             # Format txt adding "," each 3 characters from right to left in the number part
                             tiempo_str = f"{elapsed_seconds:,}".replace(",", ".")
-                            pago_str = f"{elapsed_seconds * SECOND_PRICING:,}".replace(",", ".")
-                            txt = f"TIEMPO: {tiempo_str} s".ljust(16)
-                            txt += f"PAGO: {pago_str} $".ljust(16)
+                            pago_str = f"{elapsed_seconds * DAY_PRICING:,}".replace(",", ".")
+                            txt = f"TIEMPO: {tiempo_str}d".ljust(16)
+                            txt += f"PAGO: {pago_str}$".ljust(16)
                             serial_message_display = f"display:{txt}"
                             time.sleep(0.1)
                             send_serial_message(ser, serial_message_display)
